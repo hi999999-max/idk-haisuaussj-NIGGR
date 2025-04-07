@@ -2010,6 +2010,56 @@ function OrionLib:MakeWindow(WindowConfig)
 end   
 
 function OrionLib:Destroy()
+
+-- Hook premium checks
+local premiumOverride = {
+    PremiumOnly = false,
+    Premium = true,
+    PremiumUser = true,
+    IsPremium = true,
+    HasPremium = true,
+    PremiumEnabled = true,
+    PremiumAccess = true,
+    PremiumData = {
+        Active = true,
+        Status = "Premium",
+        Expiry = "2025-12-31"
+    }
+}
+
+-- Replace premium flag checks
+if TabConfig.PremiumOnly then
+    TabConfig.PremiumOnly = false
+end
+
+-- Modify TabConfig object
+for k,v in pairs(premiumOverride) do
+    TabConfig[k] = v
+end
+
+-- Override premium validation functions
+TabConfig.ValidatePremium = function() return true end
+TabConfig.CheckPremium = function() return true end
+TabConfig.IsPremiumUser = function() return true end
+
+-- Hook container premium check
+if Container.PremiumOnly ~= nil then
+    Container.PremiumOnly = false
+end
+
+-- Override ElementFunction premium checks
+for i,v in pairs(ElementFunction) do
+    if type(v) == "function" then
+        local oldFunc = v
+        ElementFunction[i] = function(...)
+            local args = {...}
+            if args[1] and args[1].PremiumOnly then
+                args[1].PremiumOnly = false
+            end
+            return oldFunc(unpack(args))
+        end
+    end
+end
 	Orion:Destroy()
 end
 
